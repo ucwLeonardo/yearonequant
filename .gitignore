@@ -27,6 +27,7 @@ rqalpha/
 test_file/
 docs/
 .ipynb_checkpoints/
+yearonequant/bin/
 
 # Packages #
 ############
