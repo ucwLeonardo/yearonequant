@@ -10,18 +10,17 @@ import datetime
 import pandas as pd
 import numpy as np
 from pandas.tseries.offsets import *
+import scipy
+import scipy.stats
 
 import plotly.plotly as py
 import plotly.graph_objs as go
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
-############################## Initialize rqdatac and plotly environments ################################
-# initialize rqdatac to enable online functions such as get_price() and get_next_trading_date()
-rqdatac.init('xinjin', '123456', ('172.19.182.162', 16003))
-
+############################## Initialize plotly environments ################################
 # initialize plotly to enable offline mode
 init_notebook_mode(connected=True)
-############################## Initialize rqdatac and plotly environments ################################
+############################## Initialize plotly environments ################################
 
 ## helper functions
 # keep only year and moth(year-month) as string of datetime object

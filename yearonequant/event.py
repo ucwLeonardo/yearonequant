@@ -1,10 +1,8 @@
 from yearonequant.util_quant import *
-# from event_constructor import *
 
 HEAD_EXPAND_NUM = 60
 TAIL_EXPAND_NUM = 60
 
-## Event class
 class Event:
     """Back test performance based on rate of return chosen by a specific event
     
@@ -323,6 +321,7 @@ def announce2event(df, backtest_start_date, target_words, filter_words, filter_m
     # get date range
     start_date = date2ymd_str(df.index[-1])
     end_date = date2ymd_str(df.index[0])
+    print('start date is {}, end date is {}'.format(start_date, end_date))
     # get all valid trading dates
     trading_dates = get_trading_dates(start_date, end_date)
     # event df, no need to construct index and columns name, it's constructed on the fly
@@ -333,8 +332,10 @@ def announce2event(df, backtest_start_date, target_words, filter_words, filter_m
         code = complete_code(str(row['Code']))
         # code has meaning and title pass the filter
         if date and code and filter_title(row['Title'], target_words, filter_words, filter_mode):
-            # keep only year-month-day, convert to datetime, index is list of trading dates 
-            event_df.loc[adjust_to_trading_date(date, trading_dates), code] = 1
+	    # keep only year-month-day, convert to datetime, index is list of trading dates 
+            adjusted_date = adjust_to_trading_date(date, trading_dates)
+            # print('adjusted trading date is {}'.format(adjusted_date))
+            event_df.loc[min(datetime2date(df.index[0]), adjusted_date), code] = 1
 
     
     # NOTICE: Remember to reverse the order of row because date index in 
