@@ -24,15 +24,20 @@ class Event:
     
     # construct list of events from event_df        
     def get_event_list(self):
+
         # build a list of tuples (s_index, e_date)
         print("Generating event_list...")
+
         # loop over rows of event_df
         for event_date, row in self.event_df.iterrows():
-            # NOTICE: event_df has elements of type 'Object', which are pointers to objects, has to get object itself first
-            row_drop = row[np.isfinite(row.values.astype(np.float64))] # drop all NaN, left only events
+
+            # NOTICE: event_df has elements of type 'Object', which are pointers to objects,
+            # has to get object itself first
+            row_drop = row[np.isfinite(row.values.astype(np.float64))]  # drop all NaN, left only events
             # loop over every element in row series
-            for stock_index, event_indicator in row_drop.iteritems(): # event_indicator is always 1
+            for stock_index, event_indicator in row_drop.iteritems():   # event_indicator is always 1
                 self.event_list.append((stock_index, event_date))
+
         print('Done! Found totally {} events.'.format(len(self.event_list)))
         
     def get_prices(self, fields='close', adjust_type='post', frequency='1d'):
