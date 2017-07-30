@@ -37,146 +37,148 @@ class Factor:
         return rank_df
 
     @staticmethod
-    def get_ret_by_sets(ret_df, rank_df):
-        """get cumulate return by set, column is set number, row is period
-        """
-
-        num_of_sets = int(max(rank_df.iloc[0]))  # get set number
-        ret_of_sets = pd.DataFrame()
-
-        # loop over number of sets
-        for i in range(1, num_of_sets + 1):
-            # shift to ignore first row, which is NaN after computed ret
-            shifted_rank_df = rank_df.shift(1)
-            # select columns of price_df with same rank number (presented in rank_df)
-            ret_of_set = ret_df[shifted_rank_df == i]
-            ret_of_sets[i] = np.mean(ret_of_set, axis=1) - 1  # set column with name "i"
-
-        # get cumulative return, last row is the cumulate return so far
-        ret_of_sets = (ret_of_sets + 1).cumprod() - 1
-
-        return ret_of_sets
-
-    @staticmethod
-    def get_ic(factor_df, ret_df, ic_type='rank'):
+    def get_ic(factor_df, price_df, interval, ic_type='rank'):
         """Return a series of IC value, respect to each time period
         :param factor_df DataFrame of factor values
-        :param ret_df DataFrame of return values
+        :param price_df DataFrame of return values
+        :param interval list of intervals in concern
         :param ic_type type of ic, rank for spearman, normal for pearson
         """
-
-        ic_series = pd.Series(np.nan, factor_df.index[:-1])
-
-        if ic_type == 'rank':
-
-            for i in range(0, factor_df.shape[0] - 1):  # loop over rows
-
-                current_factor = factor_df.iloc[i]
-                future_ret = ret_df.iloc[i + 1]
-                combined_data = pd.concat([current_factor, future_ret], axis=1).dropna()
-
-                # first returned value is coefficient
-                ic = scipy.stats.spearmanr(combined_data)[0]
-                ic_series[i] = ic
-
-        elif ic_type == 'normal':
-
-            for i in range(0, factor_df.shape[0] - 1):  # loop over rows
-
-                current_factor = factor_df.iloc[i]
-                future_ret = ret_df.iloc[i + 1]
-                combined_data = pd.concat([current_factor, future_ret], axis=1).dropna()
-
-                # first returned value is coefficient
-                ic = scipy.stats.pearsonr(combined_data.ix[:, 0], combined_data.ix[:, 1])[0]
-                ic_series[i] = ic
-
-        else:
+        valid_type = ['rank', 'normal']
+        if ic_type not in valid_type:
             print("Invalid IC type! Feasible input: ['rank', 'normal']")
+            return
 
-        return ic_series
+        ic_df = pd.DataFrame(np.nan, index=factor_df.index, columns=interval)
 
-    @staticmethod
-    def get_ir(ic, window_size):
-        """Return a series of IR value, respect to each time period's rolling value
-        :param window_size window size of rolling MA
-        """
+        for n in range(0, len(interval)):
 
-        ic_rolling_mean = ic.rolling(window=window_size).mean()
-        ic_rolling_std = ic.rolling(window=window_size).std()
+            ic_series = pd.Series(np.nan, factor_df.index)
+            ret_df = price_df / price_df.shift(interval[n]) - 1
 
-        ir = ic_rolling_mean / ic_rolling_std
+            if ic_type == 'rank':
 
-        return ir
+                for i in range(interval[n], factor_df.shape[0]):  # loop over rows
 
-    def get_performance_by_sets(self, num_of_sets):
-        """Return a DataFrame of performance by sets.
-        :param num_of_sets: number of sets to group
-        :return: DataFrame of return performance by sets
-        """
+                    previous_factor = factor_df.iloc[i - interval[n]]
+                    current_ret = ret_df.iloc[i]
+                    data = pd.concat([previous_factor, current_ret], axis=1).dropna()
+                    # first returned value is coefficient
+                    ic = scipy.stats.spearmanr(data)[0]
+                    ic_series[i] = ic
 
-        rank_df = self.get_rank_df(self.factor_df, num_of_sets)
+            elif ic_type == 'normal':
 
-        ret_by_sets = self.get_ret_by_sets(self.ret_df, rank_df)
-        cumulate_ret_by_sets = pd.Series(ret_by_sets.iloc[-1])
+                for i in range(interval[n], factor_df.shape[0]):  # loop over rows
 
-        ic_normal_by_sets = pd.Series(index=range(1, num_of_sets + 1))
-        ic_rank_by_sets = pd.Series(index=range(1, num_of_sets + 1))
+                    previous_factor = factor_df.iloc[i - interval[n]]
+                    current_ret = ret_df.iloc[i]
+                    data = pd.concat([previous_factor, current_ret], axis=1).dropna()
 
-        for i in range(1, num_of_sets + 1):
+                    ic = scipy.stats.pearsonr(data.ix[:, 0], data.ix[:, 1])[0]
+                    ic_series[i] = ic
 
-            factor_of_set = self.factor_df[rank_df == i].dropna(axis=1, how='all')
-            ret_of_set = self.ret_df[rank_df == i].dropna(axis=1, how='all')
+            ic_df.iloc[:, n] = ic_series
 
-            ic_normal_by_sets[i] = np.mean(self.get_ic(factor_of_set, ret_of_set, 'normal'))
-            ic_rank_by_sets[i] = np.mean(self.get_ic(factor_of_set, ret_of_set, 'rank'))
+        return ic_df
 
-        performance = pd.DataFrame({'cumulate_ret_by_sets': cumulate_ret_by_sets,
-                                    'ic_normal_by_sets': ic_normal_by_sets,
-                                    'ic_rank_by_sets': ic_rank_by_sets})
-        performance = performance.T
-
-        self.performance_by_sets = performance
-
-        return performance
-
-    def get_performance_of_factor(self, window_size, ic_type='rank'):
+    def get_performance_of_factor(self, interval, window_size, ic_type='rank'):
         """Return a DataFrame of factor indicators
+        :param interval list of interval in concern
         :param window_size: window size for moving average
         :param ic_type: can be normal or rank
         :return: DataFrame of factor's performance by set
         """
 
-        ic = self.get_ic(self.factor_df, self.ret_df, ic_type)
+        ic = self.get_ic(self.factor_df, self.price_df, interval, ic_type)
 
         ic_ma = ic.rolling(window=window_size).mean()
         ic_std = ic.rolling(window=window_size).std()
 
         ir = ic_ma / ic_std
 
-        ic_df = pd.DataFrame({'ic': ic, 'ic_ma': ic_ma, 'ic_std': ic_std, 'ir': ir})
+        ic_dp = pd.Panel({'information_coefficient': ic,
+                          'rolling_mean_IC': ic_ma,
+                          'rolling_std_IC': ic_std,
+                          'information_ratio': ir})
 
-        self.ic_indicator = ic_df
+        self.ic_indicator = ic_dp
 
-        return ic_df
+        return ic_dp
 
-        # def get_contribution_coefficient(number_of_sets):
-        #     """(last set's return - first set's return) / (last set's return - first set's return),
-        #         numerator is grouped by factor, denominator is grouped by return
-        #     """
-        #     ret_of_sets_by_factor = self.get_ret_by_sets()
+    def quantile_returns(self, num_of_sets):
+        """
+        Return rate by set, column is set number, row is period
+        :param num_of_sets number of sets
+        """
+        ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
 
-        #     # compute return of sets, where sets are grouped by return
-        #     rank_of_ret = self.get_rank_df(self.ret_df, number_of_sets)
-        #     ret_of_sets_by_return = pd.DataFrame()
+        for i in range(1, len(self.factor_df)):
 
-        #     # loop over set number to get mean of each set
-        #     for i in range(1, self.num_of_sets + 1):
+            # get factor data at t-1
+            previous_factor = self.factor_df[i - 1:i].dropna(axis=1)
 
-        #         shifted_rank_of_ret = rank_of_ret.shift(1)  # shift down one row, ignore first NaN row of ret
-        #         ret_of_sets_by_return[i] = np.mean(ret[shifted_rank_of_ret == i], axis = 1) - 1
+            if previous_factor.shape[1] > 0:
+                # corresponding ranks at t-1, ascending
+                previous_rank = previous_factor.rank(axis=1)
+                # transform (1, n) dataframe to a (n, ) series,
+                # therefor the output of pd.qcut() function will have indexes
+                rank_series = pd.Series(previous_rank.values[0], index=previous_rank.columns)
 
-        #     numerator = abs(ret_of_sets_by_factor[self.num_of_sets] - ret_of_sets_by_factor[1])
-        #     denominator = abs(ret_of_sets_by_return[self.num_of_sets] - ret_of_sets_by_return[1])
+                # label given data
+                label = pd.qcut(x=rank_series, q=num_of_sets, labels=range(1, num_of_sets + 1))
+                label.name = 'label'
+                # get realized returns at t
+                current_ret = self.ret_df[i:i + 1].dropna(axis=1)
+                # eliminate the impact of external data, such as recent listed stocks
+                labeled_data = pd.concat([current_ret.T, label], axis=1).dropna()
 
-        #     return numerator / denominator
+                # calculate returns for each set and update
+                current_sets_ret = labeled_data.groupby(by='label').mean().T[:1]
+                ret_of_sets.ix[current_sets_ret.index] = current_sets_ret
+
+        return ret_of_sets
+
+    def quantile_performance(self, num_of_sets):
+        """
+        Get performance of each set
+        :param num_of_sets:
+        :return:
+        """
+
+        quantile_ret = self.quantile_returns(num_of_sets)
+
+        nv = pd.Series((quantile_ret + 1).cumprod()[-1:].values[0], index=quantile_ret.columns)
+        mu = quantile_ret.mean()
+        sigma = quantile_ret.std()
+        sharpe = mu / sigma
+
+        performance_df = pd.DataFrame({'Ending_NV': nv,
+                                       'Mean_Return': mu,
+                                       'Stdev': sigma,
+                                       'Sharpe_Ratio': sharpe})
+
+        performance_df = performance_df.T
+
+        return performance_df
+
+    # def get_contribution_coefficient(number_of_sets):
+    #     """(last set's return - first set's return) / (last set's return - first set's return),
+    #         numerator is grouped by factor, denominator is grouped by return
+    #     """
+    #     ret_of_sets_by_factor = self.get_ret_by_sets()
+
+    #     # compute return of sets, where sets are grouped by return
+    #     rank_of_ret = self.get_rank_df(self.ret_df, number_of_sets)
+    #     ret_of_sets_by_return = pd.DataFrame()
+
+    #     # loop over set number to get mean of each set
+    #     for i in range(1, self.num_of_sets + 1):
+
+    #         shifted_rank_of_ret = rank_of_ret.shift(1)  # shift down one row, ignore first NaN row of ret
+    #         ret_of_sets_by_return[i] = np.mean(ret[shifted_rank_of_ret == i], axis = 1) - 1
+
+    #     numerator = abs(ret_of_sets_by_factor[self.num_of_sets] - ret_of_sets_by_factor[1])
+    #     denominator = abs(ret_of_sets_by_return[self.num_of_sets] - ret_of_sets_by_return[1])
+
+    #     return numerator / denominator
