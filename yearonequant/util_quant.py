@@ -14,15 +14,13 @@ import scipy
 import scipy.stats
 
 import plotly.plotly as py
+from plotly import tools
 import plotly.graph_objs as go
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
-############################## Initialize plotly environments ################################
 # initialize plotly to enable offline mode
 init_notebook_mode(connected=True)
 
-
-############################## Initialize plotly environments ################################
 
 # helper functions
 # keep only year and moth(year-month) as string of datetime object
@@ -146,7 +144,6 @@ def plot_band(time_series, title_str, yaxis_str, std_num=1):
 
 # plot line and area beneath of a time series
 def plot_area(time_series, title_str):
-
     trace = go.Scatter(
         x=time_series.index,
         y=time_series,
@@ -165,12 +162,20 @@ def plot_area(time_series, title_str):
     iplot(fig, filename=title_str)
 
 
-# plot bar chart of a time sereis
 def plot_bar(time_series, title_str):
+    """
+    Plot time series as bar
+    :param time_series:
+    :param title_str: title of plot
+    :return:
+    """
+
     bar = [go.Bar(
         x=time_series.index,
         y=time_series
     )]
+
+    data = bar
 
     layout = go.Layout(
         paper_bgcolor='rgba(0,0,0,0)',
@@ -178,7 +183,87 @@ def plot_bar(time_series, title_str):
         showlegend=False
     )
 
-    data = bar
     fig = go.Figure(data=data, layout=layout)
 
-    iplot(data, filename=title_str)
+    iplot(fig, filename=title_str)
+
+
+def subplot_df_area(df, title_str):
+    """
+    Plot each column of df as a subplot.
+    :param df: DataFrame to plot
+    :param title_str: title of the whole plot
+    """
+    plot_num = df.shape[1]
+    assert plot_num % 2 == 0
+    row_num = 2
+    col_num = int(plot_num / 2)
+
+    title_str_tuple = tuple(df.columns)
+
+    fig = tools.make_subplots(rows=row_num, cols=col_num,
+                              subplot_titles=title_str_tuple)
+
+    count = 0
+    for i in range(1, row_num + 1):
+        for j in range(1, col_num + 1):
+            series = df.iloc[:, count]
+            fig.append_trace(
+                go.Scatter(
+                    x=series.index,
+                    y=series,
+                    fill='tonexty'
+                ), i, j)
+            count += 1
+
+    fig['layout'].update(
+        paper_bgcolor='rgba(0,0,0,0)',
+        title=title_str,
+        showlegend=False
+    )
+
+    iplot(fig, filename=title_str)
+
+
+def plot_df(df, title_str, plot_type='line'):
+    """
+    Plot each column of df as a subplot.
+    :param df: DataFrame to plot
+    :param title_str: title of the whole plot
+    :param plot_type: line or area
+    """
+    valid_plot_type = ['line', 'area']
+    if plot_type not in valid_plot_type:
+        print("Invalid plot type! Feasible type: 'line', 'area'")
+        return
+
+    data = list()
+
+    for i in range(df.shape[1]):
+
+        series = df.iloc[:, i]
+        if plot_type == 'line':
+            data.append(
+                go.Scatter(
+                    x=series.index,
+                    y=series,
+                    name="set " + str(df.columns[i])
+                ))
+        if plot_type == 'area':
+            data.append(
+                go.Scatter(
+                    x=series.index,
+                    y=series,
+                    fill='tonexty',
+                    name="set " + str(df.columns[i])
+                ))
+
+    layout = go.Layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        title=title_str,
+        showlegend=False
+    )
+
+    fig = go.Figure(data=data, layout=layout)
+
+    iplot(fig, filename=title_str)
