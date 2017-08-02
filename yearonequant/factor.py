@@ -12,7 +12,7 @@ class Factor:
 
         self.factor_df = factor_df
         self.price_df = price_df
-        self.ret_df = price_df / price_df.shift(1)
+        self.ret_df = price_df.pct_change()
 
         self.ret_of_sets = None
 
@@ -118,7 +118,8 @@ class Factor:
                 ret_of_sets.ix[current_sets_ret.index] = current_sets_ret
 
         # plot
-        plot_df(ret_of_sets, "Return of Sets")
+        nv_of_sets = (ret_of_sets + 1).cumprod()
+        plot_df(nv_of_sets, "Net Value of Sets")
 
         self.ret_of_sets = ret_of_sets
 
