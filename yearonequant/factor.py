@@ -8,13 +8,35 @@ class Factor:
     :param price_df: a DataFrame of cross sectional stock price
     """
 
-    def __init__(self, factor_df, price_df):
+    def __init__(self, factor_df, price_df, days_required=60):
 
         self.factor_df = factor_df
         self.price_df = price_df
-        self.ret_df = price_df.pct_change()
+        self.days_required = days_required
 
+        self.preprocess()
+
+        self.ret_df = price_df.pct_change()
         self.ret_of_sets = None
+
+    def preprocess(self):
+        """
+        Preprocess input DataFrame.
+        :return: void
+        """
+
+        # intersection of factor_df and price_df
+        ind_fac = self.factor_df.index
+        ind_price = self.price_df.index
+        ind = ind_fac.join(ind_price, how='inner')
+        self.factor_df = self.factor_df.ix[ind]
+        self.price_df = self.price_df.ix[ind]
+
+        # filter out first n days after going public
+        for s in self.price_df.columns:
+            price = self.price_df[s].dropna()
+            filter_date_index = price.index[:self.days_required]
+            self.price_df.ix[filter_date_index, s] = np.nan
 
     def get_ic(self, interval, ic_type='rank'):
         """Return a series of IC value, respect to each time period
@@ -102,7 +124,7 @@ class Factor:
                 # corresponding ranks at t-1, ascending
                 previous_rank = previous_factor.rank(axis=1)
                 # transform (1, n) DataFrame to a (n, ) series,
-                # therefor the output of pd.qcut() function will have indexes
+                # therefore the output of pd.qcut() function will have indexes
                 rank_series = pd.Series(previous_rank.values[0], index=previous_rank.columns)
 
                 # label given data
