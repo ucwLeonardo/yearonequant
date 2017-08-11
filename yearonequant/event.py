@@ -291,11 +291,11 @@ def filter_title(title, target_words, filter_words, filter_mode):
 
 def announce2event(df, backtest_start_date, target_words, filter_words, filter_mode, verbose=False):
     """
-    :param df is the dataframe constructed from annoucements csv file
-    :param backtest_start_date is the start date of backtest
-    :param target_words is a list of words required in annoucement title
-    :param filter_words is a list of words can not be in title
-    :param filter_mode can set to AND or OR, affect the filter logic of target words list
+    :param df:                  DataFrame constructed from annoucements csv file
+    :param backtest_start_date: the start date of backtest
+    :param target_words:        a list of words required in annoucement title
+    :param filter_words:        a list of words can not be in title
+    :param filter_mode:         can set to AND or OR, affect the filter logic of target words list
     """
 
     #################################### check ###################################

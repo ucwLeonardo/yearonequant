@@ -40,6 +40,26 @@ def date2ymd_str(date):
     return ymd
 
 
+def datetime2ymd_str(datetime):
+
+    year = datetime.year
+    month = datetime.month
+    day = datetime.day
+
+    # if month and day only has one character,
+    # append '0' on head, that's the rule of cninfo, gosh
+    if len(str(month)) == 1:
+        month_str = '0' + str(month)
+    else:
+        month_str = str(month)
+    if len(str(day)) == 1:
+        day_str = '0' + str(day)
+    else:
+        day_str = str(day)
+
+    return str(year) + '-' + month_str + '-' + day_str
+
+
 def datetime2date(date_time):
     y = date_time.year
     m = date_time.month
@@ -69,6 +89,11 @@ def adjust_to_trading_date(date_time, trading_dates_list):
 
 
 def complete_code(code):
+    """
+    Append stock code number with code type.
+    :param code: code in digits
+    :return: code in complete form
+    """
     if len(code) < 6:  # code is empty or length smaller than 6
         return False
     # careful, code is string type
@@ -82,7 +107,11 @@ def complete_code(code):
 
 # IO functions
 def read_announce_csv(file_name):
-    # read csv file into dataframe
+    """
+    Read announcement csv file into DataFrame
+    :param file_name: file name
+    :return: the DataFrame
+    """
     df = pd.read_csv(file_name, dtype=str,
                      parse_dates=True,
                      index_col='Date',
