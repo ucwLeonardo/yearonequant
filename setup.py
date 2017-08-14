@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='yearonequant',
-      version='1.5.5',
+      version='1.5.6',
       description='Think as quant, trade as quant',
       url='http://github.com/hyqLeonardo/yearonequant',
       author='Leonardo',

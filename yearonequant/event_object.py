@@ -26,7 +26,8 @@ def append_event(event_dict):
 
 # 增持
 holding_increase_target = ['增持']
-holding_increase_filter = ['完成', '误操作', '倡议书', '进展', '核查意见', '补充']
+holding_increase_filter = ['完成', '误操作', '倡议书', '进展', '核查意见', '补充',
+                           '完毕', '法律意见书']
 holding_increase_mode = 'OR'
 
 holding_increase = EventDict("holding_increase", holding_increase_target,
@@ -36,7 +37,7 @@ append_event(holding_increase)
 # 减持
 holding_decrease_target = ['减持']
 holding_decrease_filter = ['不减持', '不存在减持', '终止', '限制', '购回', '回购',
-                           '完成', '更正', '更新', '完毕', '用于', '进展']
+                           '完成', '更正', '更新', '完毕', '用于', '进展', '法律意见书']
 holding_decrease_mode = 'OR'
 
 holding_decrease = EventDict("holding_decrease", holding_decrease_target,

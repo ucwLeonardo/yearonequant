@@ -91,7 +91,7 @@ def adjust_to_trading_date(date_time, trading_dates_list):
 def complete_code(code):
     """
     Append stock code number with code type.
-    :param code: code in digits
+    :param code: code in digits as string
     :return: code in complete form
     """
     if len(code) < 6:  # code is empty or length smaller than 6
