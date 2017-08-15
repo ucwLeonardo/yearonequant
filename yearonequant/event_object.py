@@ -61,3 +61,31 @@ forecast_decline_mode = 'AND'
 forecast_decline = EventDict("forecast_decline", forecast_decline_target,
                              forecast_decline_filter, forecast_decline_mode)
 append_event(forecast_decline)
+
+# 调研
+research_target = ['调研']
+research_filter = ['完成', '完毕', '办法', '制度']
+research_mode = 'OR'
+
+research = EventDict("research", research_target,
+                     research_filter, research_mode)
+append_event(research)
+
+# 高送转
+high_stock_dividend_target = ['高送转']
+high_stock_dividend_filter = ['更正', '修正', '更改', '补充', '问询', '取消']
+high_stock_dividend_mode = 'OR'
+
+high_stock_dividend = EventDict("high_stock_dividend", high_stock_dividend_target,
+                                high_stock_dividend_filter, high_stock_dividend_mode)
+append_event(high_stock_dividend)
+
+# 重大资产重组
+major_asset_restructure_target = ['重大资产重组']
+major_asset_restructure_filter = ['更正', '修正', '更改', '补充', '问询', '取消', '继续停牌',
+                                  '进展', '终止', '意见', '承诺函', '规定']
+major_asset_restructure_mode = 'OR'
+
+major_asset_restructure = EventDict("major_asset_restruct", major_asset_restructure_target,
+                                    major_asset_restructure_filter, major_asset_restructure_mode)
+append_event(major_asset_restructure)
