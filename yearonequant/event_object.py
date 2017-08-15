@@ -86,6 +86,6 @@ major_asset_restructure_filter = ['更正', '修正', '更改', '补充', '问�
                                   '进展', '终止', '意见', '承诺函', '规定']
 major_asset_restructure_mode = 'OR'
 
-major_asset_restructure = EventDict("major_asset_restruct", major_asset_restructure_target,
+major_asset_restructure = EventDict("major_asset_restructure", major_asset_restructure_target,
                                     major_asset_restructure_filter, major_asset_restructure_mode)
 append_event(major_asset_restructure)
