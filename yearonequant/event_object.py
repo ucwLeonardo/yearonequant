@@ -62,7 +62,7 @@ append_event(holding_decrease)
 # 预增
 forecast_growth_target = ['预增', '年度']
 forecast_growth_filter = ['更正', '修正', '更改', '补充']
-forecast_growth_mode = 'OR'
+forecast_growth_mode = 'AND'
 
 forecast_growth = EventDict("forecast_growth", forecast_growth_target,
                             forecast_growth_filter, forecast_growth_mode)
