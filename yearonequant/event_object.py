@@ -1,15 +1,30 @@
 
 ALL_EVENTS = dict()
-EVENT_NAME_MAP = {'holding_increase': '增持',
+
+# English to Chinese
+EVENT_NAME_E2C = {'holding_increase': '增持',
                   'holding_decrease': '减持',
                   'forecast_growth': '预增',
-                  'forecast_decline': '预减'}
+                  'forecast_decline': '预减',
+                  'research': '调研',
+                  'high_stock_dividend': '高送转',
+                  'major_asset_restructure': '重大资产重组',
+                  'rename': '更名'}
+# Chinese to English
+EVENT_NAME_C2E = {'增持': 'holding_increase',
+                  '减持': 'holding_decrease',
+                  '预增': 'forecast_growth',
+                  '预减': 'forecast_decline',
+                  '调研': 'research',
+                  '高送转': 'high_stock_dividend',
+                  '重大资产重组': 'major_asset_restructure',
+                  '更名': 'rename'}
 
 
 class EventDict:
     def __init__(self, name, target_words, filter_words, filter_mode):
         self.name = name
-        self.chinese_name = EVENT_NAME_MAP.get(name)
+        self.chinese_name = EVENT_NAME_E2C.get(name)
         self.target_words = target_words
         self.filter_words = filter_words
         self.filter_mode = filter_mode
