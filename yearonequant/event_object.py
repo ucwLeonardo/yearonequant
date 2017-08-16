@@ -82,10 +82,19 @@ append_event(high_stock_dividend)
 
 # 重大资产重组
 major_asset_restructure_target = ['重大资产重组']
-major_asset_restructure_filter = ['更正', '修正', '更改', '补充', '问询', '取消', '继续停牌',
-                                  '进展', '终止', '意见', '承诺函', '规定']
+major_asset_restructure_filter = ['更正', '修正', '更改', '补充', '问询', '取消', '停牌',
+                                  '复牌', '延期', '进展', '终止', '意见', '承诺函', '规定']
 major_asset_restructure_mode = 'OR'
 
 major_asset_restructure = EventDict("major_asset_restructure", major_asset_restructure_target,
                                     major_asset_restructure_filter, major_asset_restructure_mode)
 append_event(major_asset_restructure)
+
+# 更名
+rename_target = ['更名']
+rename_filter = ['控股', '债券', '附属', '下属', '代管', '股东', '进展']
+rename_mode = 'OR'
+
+rename = EventDict("rename", rename_target,
+                   rename_filter, rename_mode)
+append_event(rename)
