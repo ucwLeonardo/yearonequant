@@ -9,7 +9,8 @@ EVENT_NAME_E2C = {'holding_increase': '增持',
                   'research': '调研',
                   'high_stock_dividend': '高送转',
                   'major_asset_restructure': '重大资产重组',
-                  'rename': '更名'}
+                  'rename': '更名',
+                  'deregulation': '解禁'}
 # Chinese to English
 EVENT_NAME_C2E = {'增持': 'holding_increase',
                   '减持': 'holding_decrease',
@@ -18,7 +19,8 @@ EVENT_NAME_C2E = {'增持': 'holding_increase',
                   '调研': 'research',
                   '高送转': 'high_stock_dividend',
                   '重大资产重组': 'major_asset_restructure',
-                  '更名': 'rename'}
+                  '更名': 'rename',
+                  '解禁': 'deregulation'}
 
 
 class EventDict:
@@ -41,8 +43,8 @@ def append_event(event_dict):
 
 # 增持
 holding_increase_target = ['增持']
-holding_increase_filter = ['完成', '误操作', '倡议书', '进展', '核查意见', '补充',
-                           '完毕', '法律意见书', '延期']
+holding_increase_filter = ['完成', '误操作', '倡议书', '进展', '意见', '补充',
+                           '完毕', '法律意见书', '延期', '摘要', '结果']
 holding_increase_mode = 'OR'
 
 holding_increase = EventDict("holding_increase", holding_increase_target,
@@ -113,3 +115,13 @@ rename_mode = 'OR'
 rename = EventDict("rename", rename_target,
                    rename_filter, rename_mode)
 append_event(rename)
+
+# 解禁
+deregulation_target = ['限售股解禁', '提示']
+deregulation_filter = ['核查']
+deregulation_mode = 'AND'
+
+deregulation = EventDict("deregulation", deregulation_target,
+                         deregulation_filter, deregulation_mode)
+
+append_event(deregulation)
