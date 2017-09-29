@@ -296,3 +296,18 @@ def plot_df(df, title_str, plot_type='line'):
     fig = go.Figure(data=data, layout=layout)
 
     iplot(fig, filename=title_str)
+
+
+def plot_ohlc(df, title_str):
+    
+    trace = go.Ohlc(x=df.index,
+                open=df.Open,
+                high=df.High,
+                low=df.Low,
+                close=df.Close,
+                increasing=dict(line=dict(color= 'red')),
+                decreasing=dict(line=dict(color= 'green')))
+    
+    data = [trace]
+    
+    iplot(data, filename=title_str)
