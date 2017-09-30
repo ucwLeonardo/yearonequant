@@ -120,7 +120,7 @@ class Factor:
             # get factor data at t-1
             previous_factor = self.factor_df[i - 1:i].dropna(axis=1)
 
-            if previous_factor.shape[1] > 0:
+            if previous_factor.dropna(axis=1).shape[1] > num_of_sets:
                 # corresponding ranks at t-1, ascending
                 previous_rank = previous_factor.rank(axis=1)
                 # transform (1, n) DataFrame to a (n, ) series,
@@ -128,7 +128,8 @@ class Factor:
                 rank_series = pd.Series(previous_rank.values[0], index=previous_rank.columns)
 
                 # label given data
-                label = pd.qcut(x=rank_series, q=num_of_sets, labels=range(1, num_of_sets + 1))
+                label = pd.qcut(x=rank_series.rank(method='first'), q=num_of_sets,
+                                labels=range(1, num_of_sets + 1))
                 label.name = 'label'
                 # get realized returns at t
                 current_ret = self.ret_df[i:i + 1].dropna(axis=1)
