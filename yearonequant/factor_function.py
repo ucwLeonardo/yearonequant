@@ -14,20 +14,13 @@ from yearonequant.factor import *
 # start_date = '2010-01-01'
 # end_date = '2017-09-30'
 
-# open_df = get_price(order_book_ids, start_date=start_date, end_date=end_date,
-#                         fields='open', adjust_type='post')
-# high_df = get_price(order_book_ids, start_date=start_date, end_date=end_date,
-#                         fields='close', adjust_type='post')
-# low_df = get_price(order_book_ids, start_date=start_date, end_date=end_date,
-#                     fields='low', adjust_type='post')
+# panel_data = get_price(order_book_ids, start_date=start_date, end_date=end_date,
+#                     fields=['open', 'high', 'low', 'volume'], adjust_type='post')
 # close_df = get_price(order_book_ids, start_date=start_date, end_date=end_date,
-#                     fields='high', adjust_type='post')
-# volume_df = get_price(order_book_ids, start_date=start_date, end_date=end_date,
-#                     fields='volume', adjust_type='post')
+#                     fields='close', adjust_type='post')
 # returns_df = close_df / close_df.shift(1) - 1
-#
-# panel_data = pd.Panel({'open': open_df, 'high': high_df, 'low': low_df, 'close': close_df,
-#                        'volume': volume_df, 'retruns': returns_df})
+# panel_data['close'] = close_df
+# panel_data['returns'] = returns_df
 
 def signF(df):
     return np.sign(df)
@@ -330,6 +323,220 @@ def factor040(panel):
 
     print('calculating factor...')
     factor_df = -1 * rankF(stddevF(panel.high, 10)) * correlationF(panel.high, panel.volume, 10)
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+def factor041(panel):
+
+    print('calculating factor...')
+    vwap = ( 2*(panel.open + panel.close) + panel.high + panel.low ) / 6
+    factor_df = (panel.high * panel.low) ** 0.5 - vwap
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor042(panel):
+
+    print('calculating factor...')
+    vwap = ( 2 * (panel.open + panel.close) + panel.high + panel.low ) / 6
+    factor_df = rankF(vwap - panel.close) / rankF(vwap + panel.close)
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor044(panel):
+
+    print('calculating factor...')
+    factor_df = -1 * correlationF(panel.high, rankF(panel.volume), 5)
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor045(panel):
+
+    print('calculating factor...')
+    part1 = rankF( sumF( delayF(panel.close, 5), 20 ) / 20 )
+    part2 = correlationF(panel.close, panel.volume, 2)
+    part3 = rankF( correlationF( sumF(panel.close, 5), sumF(panel.close, 20), 2 ) )
+    factor_df = -1 * part1 * part2 * part3
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor050(panel):
+
+    h = panel.high
+    l = panel.low
+    o = panel.open
+    c = panel.close
+    v = panel.volume
+
+    print('calculating factor...')
+    vwap = (2 * (o + c) + h + l) / 6
+    part1 = correlationF(rankF(v), rankF(vwap), 5)
+    part2 = rankF(part1)
+    factor_df = -1 * ts_maxF( part2, 5 )
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor052(panel):
+
+    l = panel.low
+    r = panel.returns
+    v = panel.volume
+
+    print('calculating factor...')
+    part1 = -1 * ts_minF(l, 5) + delayF( ts_minF(l, 5), 5 )
+    part2 = rankF( (sumF(r, 240) - sumF(r, 20)) / 220 )
+    part3 = ts_rankF(v, 5)
+    factor_df = part1 * part2 * part3
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor053(panel):
+
+    c = panel.close
+    l = panel.low
+    h = panel.high
+
+    print('calculating factor...')
+    factor_df = -1 * deltaF( ((c-l) - (h-c)) / (c - l), 9 )
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor054(panel):
+
+    c = panel.close
+    l = panel.low
+    h = panel.high
+    o = panel.open
+
+    print('calculating factor...')
+    factor_df = -1 * (l - c) * (o ** 5) / ( (l - h) * (c ** 5) )
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor055(panel):
+
+    c = panel.close
+    l = panel.low
+    h = panel.high
+    v = panel.volume
+
+    print('calculating factor...')
+    part1 = (c - ts_minF(l, 12)) / ts_maxF(h, 12) - ts_minF(l, 12)
+    part2 = rankF(part1)
+    factor_df = -1 * correlationF(part2, rankF(v), 6)
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor057(panel):
+
+    c = panel.close
+    l = panel.low
+    h = panel.high
+    o = panel.open
+    v = panel.volume
+
+    print('calculating factor...')
+    vwap = (2 * (c + o) + h + l) / 6
+    part1 = c - vwap
+    part2 = decay_linearF( rankF(ts_argmaxF(c, 30)), 2 )
+    factor_df = 0 - (1 * part1 / part2)
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor066(panel):
+
+    c = panel.close
+    l = panel.low
+    h = panel.high
+    o = panel.open
+
+    print('calculating factor...')
+    vwap = (2 * (c + o) + h + l) / 6
+    part1 = rankF( decay_linearF( deltaF(vwap, 4), 7 ) )
+    part2 = (l + 0.96633) + (l * (1-0.96633) - vwap) / (o - (h + l)/2 )
+    part3 = ts_rankF(decay_linearF(part2, 11), 7)
+    factor_df = -1 * (part1 + part3)
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor083(panel):
+
+    c = panel.close
+    l = panel.low
+    h = panel.high
+    o = panel.open
+    v = panel.volume
+
+    print('calculating factor...')
+    vwap = (2 * (c + o) + h + l) / 6
+    part1 = rankF( delayF( (h-l) / (sumF(c, 5) / 5), 2 ) ) * rankF(rankF(v))
+    part2 = ( (h - l) / (sumF(c, 5) / 5) ) / (vwap - c)
+    factor_df = -1 * part1 / part2
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor084(panel):
+
+    c = panel.close
+    l = panel.low
+    h = panel.high
+    o = panel.open
+
+    print('calculating factor...')
+    vwap = (2 * (c + o) + h + l) / 6
+    factor_df = -1 * signedpower( ts_rankF( vwap - ts_maxF(vwap, 15), 21 ), deltaF( c, 5 ) )
+    factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
+    print('done')
+
+    return factor_df
+
+
+def factor101(panel):
+
+    c = panel.close
+    l = panel.low
+    h = panel.high
+    o = panel.open
+
+    print('calculating factor...')
+    factor_df = (c - o) / ( (h - l) + 0.001 )
     factor_df = factor_df.replace([np.inf, -np.inf], np.nan)
     print('done')
 
