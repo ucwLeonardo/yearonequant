@@ -62,7 +62,7 @@ holding_decrease = EventDict("holding_decrease", holding_decrease_target,
 append_event(holding_decrease)
 
 # 预增
-forecast_growth_target = ['预增', '年度']
+forecast_growth_target = ['预增']
 forecast_growth_filter = ['更正', '修正', '更改', '补充']
 forecast_growth_mode = 'AND'
 
@@ -71,7 +71,7 @@ forecast_growth = EventDict("forecast_growth", forecast_growth_target,
 append_event(forecast_growth)
 
 # 预减
-forecast_decline_target = ['预减', '年度']
+forecast_decline_target = ['预减']
 forecast_decline_filter = ['更正', '修正', '更改', '补充']
 forecast_decline_mode = 'AND'
 
