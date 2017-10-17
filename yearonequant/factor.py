@@ -108,19 +108,33 @@ class Factor:
 
         return ic_dp
 
-    def get_quantile_returns(self, num_of_sets):
+    def get_quantile_returns(self, num_of_sets, wheel_period=1):
         """
         Return rate by set, column is set number, row is period
         :param num_of_sets: number of sets
+        :param wheel_period: period to retain arrangement of sets
         """
         ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
 
+        wheel_label = None
         for i in range(1, len(self.factor_df)):
 
             # get factor data at t-1
             previous_factor = self.factor_df[i - 1:i].dropna(axis=1)
 
-            if previous_factor.dropna(axis=1).shape[1] > num_of_sets:
+            # tell if need to recompute set arrangement
+            change_wheel_label = i % wheel_period == 0
+            # use prev period's label
+            if not change_wheel_label and wheel_label is not None:
+                # get realized returns at t
+                current_ret = self.ret_df[i:i + 1].dropna(axis=1)
+                # eliminate the impact of external data, such as recent listed stocks
+                labeled_data = pd.concat([current_ret.T, label], axis=1).dropna()
+
+                # calculate returns for each set and update
+                current_sets_ret = labeled_data.groupby(by='label').mean().T[:1]
+                ret_of_sets.ix[current_sets_ret.index] = current_sets_ret
+            elif previous_factor.dropna(axis=1).shape[1] > num_of_sets: # compute new label
                 # corresponding ranks at t-1, ascending
                 previous_rank = previous_factor.rank(axis=1)
                 # transform (1, n) DataFrame to a (n, ) series,
@@ -131,6 +145,8 @@ class Factor:
                 label = pd.qcut(x=rank_series.rank(method='first'), q=num_of_sets,
                                 labels=range(1, num_of_sets + 1))
                 label.name = 'label'
+                # keep this arrangement
+                wheel_label = label
                 # get realized returns at t
                 current_ret = self.ret_df[i:i + 1].dropna(axis=1)
                 # eliminate the impact of external data, such as recent listed stocks
@@ -148,17 +164,18 @@ class Factor:
 
         return ret_of_sets
 
-    def get_quantile_performance(self, num_of_sets):
+    def get_quantile_performance(self, num_of_sets, wheel_period=1):
         """
         Get performance of each set
         :param num_of_sets:
+        :param wheel_period: period to retain arrangement of sets
         :return: DataFrame with set number in column, indicator in row
         """
 
         if self.ret_of_sets is not None:
             quantile_ret = self.ret_of_sets
         else:
-            quantile_ret = self.get_quantile_returns(num_of_sets)
+            quantile_ret = self.get_quantile_returns(num_of_sets, wheel_period)
 
         nv = pd.Series((quantile_ret + 1).cumprod()[-1:].values[0], index=quantile_ret.columns)
         mu = quantile_ret.mean()
