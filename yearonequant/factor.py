@@ -108,11 +108,11 @@ class Factor:
 
         return ic_dp
 
-    def get_quantile_returns(self, num_of_sets, wheel_period=1):
+    def get_quantile_returns(self, num_of_sets, rebalance_period=1):
         """
         Return rate by set, column is set number, row is period
         :param num_of_sets: number of sets
-        :param wheel_period: period to retain arrangement of sets
+        :param rebalance_period: period to retain arrangement of sets
         """
         ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
 
@@ -123,7 +123,7 @@ class Factor:
             previous_factor = self.factor_df[i - 1:i].dropna(axis=1)
 
             # tell if need to recompute set arrangement
-            change_wheel_label = i % wheel_period == 0
+            change_wheel_label = i % rebalance_period == 0
             # use prev period's label
             if not change_wheel_label and wheel_label is not None:
                 # get realized returns at t
@@ -164,18 +164,18 @@ class Factor:
 
         return ret_of_sets
 
-    def get_quantile_performance(self, num_of_sets, wheel_period=1):
+    def get_quantile_performance(self, num_of_sets, rebalance_period=1):
         """
         Get performance of each set
         :param num_of_sets:
-        :param wheel_period: period to retain arrangement of sets
+        :param rebalance_period: period to retain arrangement of sets
         :return: DataFrame with set number in column, indicator in row
         """
 
         if self.ret_of_sets is not None:
             quantile_ret = self.ret_of_sets
         else:
-            quantile_ret = self.get_quantile_returns(num_of_sets, wheel_period)
+            quantile_ret = self.get_quantile_returns(num_of_sets, rebalance_period)
 
         nv = pd.Series((quantile_ret + 1).cumprod()[-1:].values[0], index=quantile_ret.columns)
         mu = quantile_ret.mean()
