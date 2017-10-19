@@ -108,24 +108,32 @@ class Factor:
 
         return ic_dp
 
-    def get_quantile_returns(self, num_of_sets, rebalance_period=1):
+    def get_weighted_returns(self):
+        weighted_factor_df = self.factor_df.div(self.factor_df.abs.sum(axis=1), axis=0)
+        weighted_return_df = weighted_factor_df * self.ret_df
+        weighted_return = weighted_return_df.sum(axis=1)
+        (weighted_return + 1).cumprod()
+
+
+    def get_quantile_returns(self, num_of_sets, rebalance_period=1, top_bottom=False):
         """
         Return rate by set, column is set number, row is period
         :param num_of_sets: number of sets
         :param rebalance_period: period to retain arrangement of sets
+        :param top_bottom: if turned on, plot return of long first set, short last set
         """
         ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
 
-        wheel_label = None
+        rebalanced_label = None
         for i in range(1, len(self.factor_df)):
 
             # get factor data at t-1
             previous_factor = self.factor_df[i - 1:i].dropna(axis=1)
 
             # tell if need to recompute set arrangement
-            change_wheel_label = i % rebalance_period == 0
+            need_rebalance_label = i % rebalance_period == 0
             # use prev period's label
-            if not change_wheel_label and wheel_label is not None:
+            if not need_rebalance_label and rebalanced_label is not None:
                 # get realized returns at t
                 current_ret = self.ret_df[i:i + 1].dropna(axis=1)
                 # eliminate the impact of external data, such as recent listed stocks
@@ -146,7 +154,7 @@ class Factor:
                                 labels=range(1, num_of_sets + 1))
                 label.name = 'label'
                 # keep this arrangement
-                wheel_label = label
+                rebalanced_label = label
                 # get realized returns at t
                 current_ret = self.ret_df[i:i + 1].dropna(axis=1)
                 # eliminate the impact of external data, such as recent listed stocks
@@ -157,8 +165,15 @@ class Factor:
                 ret_of_sets.ix[current_sets_ret.index] = current_sets_ret
 
         # plot
-        nv_of_sets = (ret_of_sets + 1).cumprod()
-        plot_df(nv_of_sets, "Net Value of Sets")
+        if top_bottom:
+            nv_of_top = (ret_of_sets.iloc[:, 0] + 1).cumprod()
+            nv_of_bottom = (ret_of_sets.iloc[:, num_of_sets-1] + 1).cumprod()
+            nv_of_top_bottom = nv_of_top - nv_of_bottom
+            plot_series(nv_of_top_bottom)
+
+        else:
+            nv_of_sets = (ret_of_sets + 1).cumprod()
+            plot_df(nv_of_sets, "Net Value of Sets")
 
         self.ret_of_sets = ret_of_sets
 

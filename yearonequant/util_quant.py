@@ -171,8 +171,30 @@ def plot_band(time_series, title_str, yaxis_str, std_num=1):
     iplot(fig, filename=title_str)
 
 
-# plot line and area beneath of a time series
+def plot_series(series, title_str):
+    """
+    Plot series.
+    :param series:      time series
+    :param title_str:   title
+    """
+    data = [go.Scatter(x=series.index, y=series)]
+
+    layout = go.Layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        title=title_str,
+        showlegend=False
+    )
+    fig = go.Figure(data=data, layout=layout)
+
+    iplot(fig, filename=title_str)
+
 def plot_area(time_series, title_str):
+    """
+    Plot line and area beneath of a time series.
+    :param time_series:
+    :param title_str:
+    :return:
+    """
     trace = go.Scatter(
         x=time_series.index,
         y=time_series,
