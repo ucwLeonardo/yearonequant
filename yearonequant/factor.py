@@ -112,7 +112,9 @@ class Factor:
         weighted_factor_df = self.factor_df.div(self.factor_df.abs.sum(axis=1), axis=0)
         weighted_return_df = weighted_factor_df * self.ret_df
         weighted_return = weighted_return_df.sum(axis=1)
-        (weighted_return + 1).cumprod()
+        weighted_nv = (weighted_return + 1).cumprod()
+        # plot
+        plot_series(weighted_nv)
 
 
     def get_quantile_returns(self, num_of_sets, rebalance_period=1, top_bottom=False):
