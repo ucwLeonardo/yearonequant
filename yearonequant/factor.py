@@ -109,12 +109,12 @@ class Factor:
         return ic_dp
 
     def get_weighted_returns(self):
-        weighted_factor_df = self.factor_df.div(self.factor_df.abs.sum(axis=1), axis=0)
+        weighted_factor_df = self.factor_df.div(self.factor_df.abs().sum(axis=1), axis=0)
         weighted_return_df = weighted_factor_df * self.ret_df
         weighted_return = weighted_return_df.sum(axis=1)
         weighted_nv = (weighted_return + 1).cumprod()
         # plot
-        plot_series(weighted_nv)
+        plot_series(weighted_nv, 'Factor weighted nv')
 
 
     def get_quantile_returns(self, num_of_sets, rebalance_period=1, top_bottom=False):
@@ -171,7 +171,7 @@ class Factor:
             nv_of_top = (ret_of_sets.iloc[:, 0] + 1).cumprod()
             nv_of_bottom = (ret_of_sets.iloc[:, num_of_sets-1] + 1).cumprod()
             nv_of_top_bottom = nv_of_top - nv_of_bottom
-            plot_series(nv_of_top_bottom)
+            plot_series(nv_of_top_bottom, 'Long top short bottom nv')
 
         else:
             nv_of_sets = (ret_of_sets + 1).cumprod()
