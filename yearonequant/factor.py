@@ -81,11 +81,12 @@ class Factor:
 
         return ic_df
 
-    def get_performance_of_factor(self, interval, window_size, ic_type='rank', plot=False):
+    def get_performance_of_factor(self, interval, window_size, ic_type='rank', plot_graph=False):
         """Return a DataFrame of factor indicators
         :param: interval: a list of interval in concern
         :param: window_size: window size for moving average
         :param: ic_type: can be normal or rank
+        :param: plot_graph:
         :return: panel of factor's performance, grouped by set
         """
 
@@ -101,7 +102,7 @@ class Factor:
                           'rolling_std_IC': ic_std,
                           'information_ratio': ir})
 
-        if plot:
+        if plot_graph:
             # subplot
             for i in range(ic_dp.shape[2]):
                 subplot_df_area(ic_dp.iloc[:, :, i],
@@ -109,10 +110,10 @@ class Factor:
 
         return ic_dp
 
-    def get_weighted_returns(self, plot=False):
+    def get_weighted_returns(self, plot_graph=False):
         """
         Factor weighted return
-        :param plot:
+        :param plot_graph:
         :return:
         """
         weighted_factor_df = self.factor_df.div(self.factor_df.abs().sum(axis=1), axis=0)
@@ -121,18 +122,20 @@ class Factor:
         weighted_return = weighted_return_df.sum(axis=1)
         weighted_nv = (weighted_return + 1).cumprod()
 
-        if plot:
+        if plot_graph:
             plot_series(weighted_nv, 'Factor weighted nv')
 
         return weighted_nv
 
 
-    def get_quantile_returns(self, num_of_sets, rebalance_period=1, top_bottom=False, plot=False):
+    def get_quantile_returns(self, num_of_sets, rebalance_period=1, top_bottom=False, plot_graph=False):
         """
         Return rate by set, column is set number, row is period
         :param num_of_sets: number of sets
         :param rebalance_period: period to retain arrangement of sets
         :param top_bottom: if turned on, plot return of long first set, short last set
+        :param plot_graph:
+        :return:
         """
         ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
 
@@ -177,7 +180,7 @@ class Factor:
                 ret_of_sets.ix[current_sets_ret.index] = current_sets_ret
 
         # plot
-        if plot:
+        if plot_graph:
             if top_bottom:
                 nv_of_top = (ret_of_sets.iloc[:, 0] + 1).cumprod()
                 nv_of_bottom = (ret_of_sets.iloc[:, num_of_sets-1] + 1).cumprod()
@@ -192,11 +195,12 @@ class Factor:
 
         return ret_of_sets
 
-    def get_quantile_performance(self, num_of_sets, rebalance_period=1, plot=False):
+    def get_quantile_performance(self, num_of_sets, rebalance_period=1, plot_graph=False):
         """
         Get performance of each set
         :param num_of_sets:
         :param rebalance_period: period to retain arrangement of sets
+        :param plot_graph:
         :return: DataFrame with set number in column, indicator in row
         """
 
@@ -217,7 +221,7 @@ class Factor:
 
         performance_df = performance_df.T
 
-        if plot:
+        if plot_graph:
             # plot each set's sharpe ratio
             plot_bar(sharpe, 'Sharpe Ratio by Sets')
 
