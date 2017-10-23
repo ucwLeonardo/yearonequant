@@ -183,9 +183,9 @@ class Factor:
             if top_bottom:
                 return_of_bottom = ret_of_sets.iloc[:, 0]
                 return_of_top = ret_of_sets.iloc[:, num_of_sets-1]
-                return_diff = return_of_top - return_of_bottom
-                nv_of_top_bottom = (return_diff + 1).cumprod()
-                plot_series(nv_of_top_bottom, 'Long top short bottom nv')
+                spread = return_of_top - return_of_bottom
+                nv_of_top_minus_bottom = (spread + 1).cumprod()
+                plot_series(nv_of_top_minus_bottom, 'Long top short bottom nv')
 
             else:
                 nv_of_sets = (ret_of_sets + 1).cumprod()
