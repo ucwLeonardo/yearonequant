@@ -127,7 +127,6 @@ class Factor:
 
         return weighted_nv
 
-
     def get_quantile_returns(self, num_of_sets, rebalance_period=1, top_bottom=False, plot_graph=False):
         """
         Return rate by set, column is set number, row is period
@@ -182,9 +181,10 @@ class Factor:
         # plot
         if plot_graph:
             if top_bottom:
-                nv_of_top = (ret_of_sets.iloc[:, 0] + 1).cumprod()
-                nv_of_bottom = (ret_of_sets.iloc[:, num_of_sets-1] + 1).cumprod()
-                nv_of_top_bottom = nv_of_top - nv_of_bottom
+                return_of_bottom = ret_of_sets.iloc[:, 0]
+                return_of_top = ret_of_sets.iloc[:, num_of_sets-1]
+                return_diff = return_of_top - return_of_bottom
+                nv_of_top_bottom = (return_diff + 1).cumprod()
                 plot_series(nv_of_top_bottom, 'Long top short bottom nv')
 
             else:
