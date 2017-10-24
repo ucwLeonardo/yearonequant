@@ -136,6 +136,9 @@ class Factor:
         :param plot_graph:
         :return:
         """
+        if top_bottom:
+            plot_graph = True
+            
         ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
 
         rebalanced_label = None
