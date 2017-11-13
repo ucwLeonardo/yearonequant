@@ -4,14 +4,16 @@ from yearonequant.util_quant import *
 class Factor:
     """Compute indicators to evaluate single factor.
 
-    :param factor_df: a DataFrame of cross sectional factor values, stock in column
-    :param price_df: a DataFrame of cross sectional stock price
+    :param factor_df:       a DataFrame of cross sectional factor values, stock in column
+    :param price_df:        a DataFrame of cross sectional stock price
+    :param margin_rate_df:  a DataFrame of dynamic margin rate for futures
     """
 
-    def __init__(self, factor_df, price_df, days_required=60):
+    def __init__(self, factor_df, price_df, margin_rate_df=None, days_required=60):
 
         self.factor_df = factor_df
         self.price_df = price_df
+        self.margin_rate_df = margin_rate_df
         self.days_required = days_required
 
         self.preprocess()
@@ -31,6 +33,9 @@ class Factor:
         ind = ind_fac.join(ind_price, how='inner')
         self.factor_df = self.factor_df.ix[ind]
         self.price_df = self.price_df.ix[ind]
+        # modify margin_rate_df accordingly
+        self.margin_rate_df = self.margin_rate_df.ix[ind]
+        assert self.price_df.shape == self.margin_rate_df.shape
 
         # filter out first n days after going public
         for s in self.price_df.columns:
@@ -110,15 +115,27 @@ class Factor:
 
         return ic_dp
 
-    def get_weighted_returns(self, plot_graph=False):
+    def get_weighted_returns(self, margin_rate=False, plot_graph=False):
         """
         Factor weighted return
-        :param plot_graph:
+        :param margin_rate: include margin rate or not
+        :param plot_graph:  plot the graph or not
         :return:
         """
+        # sanity check
+        if margin_rate and self.margin_rate_df is None:
+            print('Please initialize Factor object with margin_rate_df provided')
+            return
+
         weighted_factor_df = self.factor_df.div(self.factor_df.abs().sum(axis=1), axis=0)
+        # if the margin_ratio is True, multiply return by margin_ratio DataFrame
+        if margin_rate:
+            assert self.ret_df.shape == self.margin_rate_df.shape
+            return_df = self.ret_df * self.margin_rate_df
+        else:
+            return_df = self.ret_df
         # shift factor_df by 1, eliminate future function
-        weighted_return_df = weighted_factor_df.shift(1) * self.ret_df
+        weighted_return_df = weighted_factor_df.shift(1) * return_df
         weighted_return = weighted_return_df.sum(axis=1)
         weighted_nv = (weighted_return + 1).cumprod()
 
