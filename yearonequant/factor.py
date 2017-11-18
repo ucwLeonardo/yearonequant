@@ -35,7 +35,7 @@ class Factor:
         self.factor_df = self.factor_df.ix[ind]
         self.price_df = self.price_df.ix[ind]
         # modify leverage_ratio_df accordingly if not None
-        if self.margin_rate_df is not None:
+        if self.leverage_ratio_df is not None:
             self.leverage_ratio_df = self.leverage_ratio_df.ix[ind]
             assert self.price_df.shape == self.leverage_ratio_df.shape
 
