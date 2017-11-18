@@ -18,8 +18,8 @@ class Factor:
 
         self.preprocess()
 
-        self.leveraged_ret_df = self.ret_df * self.leverage_ratio_df
         self.ret_df = price_df.pct_change()
+        self.leveraged_ret_df = self.ret_df * self.leverage_ratio_df
         self.ret_of_sets = None
 
     def preprocess(self):
