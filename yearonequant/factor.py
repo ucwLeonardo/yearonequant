@@ -33,9 +33,10 @@ class Factor:
         ind = ind_fac.join(ind_price, how='inner')
         self.factor_df = self.factor_df.ix[ind]
         self.price_df = self.price_df.ix[ind]
-        # modify margin_rate_df accordingly
-        self.margin_rate_df = self.margin_rate_df.ix[ind]
-        assert self.price_df.shape == self.margin_rate_df.shape
+        # modify margin_rate_df accordingly if not None
+        if self.margin_rate_df is not None:
+            self.margin_rate_df = self.margin_rate_df.ix[ind]
+            assert self.price_df.shape == self.margin_rate_df.shape
 
         # filter out first n days after going public
         for s in self.price_df.columns:
