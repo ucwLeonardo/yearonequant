@@ -20,6 +20,7 @@ class Factor:
 
         self.ret_df = price_df.pct_change()
         self.leveraged_ret_df = self.ret_df * self.leverage_ratio_df
+        assert leverage_ratio_df.shape == self.ret_df.shape
         self.ret_of_sets = None
 
     def preprocess(self):
