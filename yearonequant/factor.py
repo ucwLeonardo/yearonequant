@@ -153,6 +153,11 @@ class Factor:
         :param plot_graph:
         :return:
         """
+        # sanity check
+        if use_leverage and self.leverage_ratio_df is None:
+            print('Please initialize Factor object with margin_rate_df provided')
+            return
+
         if top_bottom:
             plot_graph = True
             
