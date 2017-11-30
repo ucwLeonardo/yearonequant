@@ -12,6 +12,8 @@ from pandas.tseries.offsets import *
 import scipy
 import scipy.stats
 
+from fp_growth import find_frequent_itemsets
+
 import plotly.plotly as py
 from plotly import tools
 import plotly.graph_objs as go
@@ -413,3 +415,62 @@ def log_tokenize_without_layer(log):
     with_layer_list = log.split('\n')[:-1]
     result_list = [node.split(',', 1)[1].replace(',', ':') for node in with_layer_list]
     return result_list
+
+
+# frequent pattern
+def log_frequent_pattern(df_with_log, support_value, min_pattern_len, tokenizer='WITHOUT_LAYER'):
+    """
+    Find and show frequent patterns of logs from the input DataFrame.
+
+    :param df_with_log:     input DataFrame with a column named log
+    :param support_value:   support value of FP-growth algorithm
+    :param min_pattern_len: pattern's minimum length, or say token
+    :param tokenizer:       with tokenizer
+    :return: DataFrame with new columns summarize frequent pattern info
+    """
+    if tokenizer not in ['WITH_LAYER', 'WITHOUT_LAYER']:
+        print("tokenizer must be chosen from 'WITH_LAYER' or 'WITHOUT_LAYER'")
+        return
+
+    df = df_with_log.copy()
+    try:
+        logs = df.factor.copy()  # pd.series
+    except AttributeError as e:
+        print(e)
+        print("The input df must contain a column named 'factor', " +
+              "which gives string representations of random generated factor.")
+        return
+
+    # tokenize each log in logs
+    for index, log in logs.iteritems():
+        if tokenizer == 'WITHOUT_LAYER':
+            logs.set_value(index, log_tokenize_without_layer(log))
+        elif tokenizer == 'WITH_LAYER':
+            logs.set_value(index, log_tokenize_with_layer(log))
+    logs_as_list = list(logs)
+
+    # find frequent_pattern
+    frequent_pattern = list(find_frequent_itemsets(logs_as_list, support_value))
+
+    filtered_frequent_pattern = filter(lambda fp: len(fp) >= min_pattern_len, frequent_pattern)
+
+    # construct the DataFrame
+    for fp in filtered_frequent_pattern:
+        fp_exist_list = list()
+        for log in logs:
+            if log_contain_pattern(log, fp):
+                fp_exist_list.append(1)
+            else:
+                fp_exist_list.append(0)
+        df[','.join(fp)] = pd.Series(fp_exist_list, index=df.index)
+
+    return df
+
+
+def log_contain_pattern(log, pattern):
+    for p in pattern:
+        if p not in log:
+            return False
+    return True
+
+
