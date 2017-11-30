@@ -332,3 +332,84 @@ def plot_ohlc(df, title_str):
     data = [trace]
     
     iplot(data, filename=title_str)
+
+
+# dedup
+def dedup_by_edit_distance(df_with_log, dist_threshold):
+    """
+    Remove duplicated log by edit distance.
+    NOTICE: input logs should be descendingly ordered by performance.
+
+    :param: logs:           logs in list or pd.Series
+    :param: dist_threshold: threshold of edit distance
+    :return: a list of unique logs
+    """
+    df = df_with_log.copy()
+    length = len(df)
+    df.index = range(length)
+    result = pd.DataFrame(columns=df.columns)
+
+    for i in reversed(range(length)):
+        row_i = df.iloc[i]
+        has_dup = False
+        for j in reversed(range(i)):
+            row_j = df.iloc[j]
+            if log_edit_distance(row_i['factor'], row_j['factor']) <= dist_threshold:
+                has_dup = True
+                break
+        if not has_dup:
+            result = result.append(row_i)
+
+    return result.iloc[::-1]
+
+
+def log_edit_distance(log1, log2):
+    """
+    Edit distance for two string of logs.
+
+    :param log1: first log
+    :param log2: second log
+    :return: a integer indicate edit distance
+    """
+    list1 = log_tokenize_with_layer(log1)
+    list2 = log_tokenize_with_layer(log2)
+    m = len(list2) + 1
+    n = len(list1) + 1
+    # table: m * n
+    table = [[0 for j in range(len(list1) + 1)] for i in range(len(list2) + 1)]
+    # topology sort
+    for i in range(m):  # row
+        for j in range(n):  # column
+            # initialize
+            if i == 0:
+                table[i][j] = j
+            elif j == 0:
+                table[i][j] = i
+            elif list1[j - 1] == list2[i - 1]:  # same char, no need to change
+                table[i][j] = table[i - 1][j - 1]
+            else:  # change
+                table[i][j] = min(table[i - 1][j - 1], table[i - 1][j], table[i][j - 1]) + 1
+    return table[m - 1][n - 1]
+
+
+def log_tokenize_with_layer(log):
+    """
+    Tokenize a string of log while keeping the layer number.
+
+    :param log: log string
+    :return: list of tokenized log
+    """
+    with_layer_list = log.split('\n')[:-1]
+    return with_layer_list
+
+
+def log_tokenize_without_layer(log):
+    """
+    Tokenize a string of log while dropping the layer number.
+
+    :param log: log string
+    :return: list of tokenized log
+    """
+    with_layer_list = log.split('\n')[:-1]
+    result_list = [node.split(',', 1)[1].replace(',', ':') for node in with_layer_list]
+    return result_list
