@@ -3,8 +3,7 @@ import random
 
 import rqdatac
 from rqdatac import *
-
-# import talib
+import talib as ta
 
 import datetime
 import pandas as pd

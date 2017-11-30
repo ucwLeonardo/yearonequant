@@ -1,22 +1,26 @@
 from yearonequant.util_quant import *
 
-
 class Factor:
     """Compute indicators to evaluate single factor.
 
-    :param factor_df: a DataFrame of cross sectional factor values, stock in column
-    :param price_df: a DataFrame of cross sectional stock price
+    :param factor_df:           a DataFrame of cross sectional factor values, stock in column
+    :param price_df:            a DataFrame of cross sectional stock price
+    :param leverage_ratio_df:   a DataFrame of dynamic leverage ratio for futures
     """
 
-    def __init__(self, factor_df, price_df, days_required=30):
+    def __init__(self, factor_df, price_df, leverage_ratio_df=None, days_required=60):
 
         self.factor_df = factor_df
         self.price_df = price_df
+        self.leverage_ratio_df = leverage_ratio_df
         self.days_required = days_required
 
         self.preprocess()
 
         self.ret_df = price_df.pct_change()
+        if self.leverage_ratio_df is not None:
+            self.leveraged_ret_df = self.ret_df * self.leverage_ratio_df
+            assert leverage_ratio_df.shape == self.ret_df.shape
         self.ret_of_sets = None
 
     def preprocess(self):
@@ -31,6 +35,10 @@ class Factor:
         ind = ind_fac.join(ind_price, how='inner')
         self.factor_df = self.factor_df.ix[ind]
         self.price_df = self.price_df.ix[ind]
+        # modify leverage_ratio_df accordingly if not None
+        if self.leverage_ratio_df is not None:
+            self.leverage_ratio_df = self.leverage_ratio_df.ix[ind]
+            assert self.price_df.shape == self.leverage_ratio_df.shape
 
         # filter out first n days after going public
         for s in self.price_df.columns:
@@ -110,15 +118,23 @@ class Factor:
 
         return ic_dp
 
-    def get_weighted_returns(self, plot_graph=False):
+    def get_weighted_returns(self, use_leverage=False, plot_graph=False):
         """
         Factor weighted return
-        :param plot_graph:
+        :param use_leverage: include leverage ratio or not
+        :param plot_graph:  plot the graph or not
         :return:
         """
+        # sanity check
+        if use_leverage and self.leverage_ratio_df is None:
+            print('Please initialize Factor object with margin_rate_df provided')
+            return
+
         weighted_factor_df = self.factor_df.div(self.factor_df.abs().sum(axis=1), axis=0)
+        # if use_leverage is True, use leveraged return DataFrame
+        return_df = self.leveraged_ret_df if use_leverage else self.ret_df
         # shift factor_df by 1, eliminate future function
-        weighted_return_df = weighted_factor_df.shift(1) * self.ret_df
+        weighted_return_df = weighted_factor_df.shift(1) * return_df
         weighted_return = weighted_return_df.sum(axis=1)
         weighted_nv = (weighted_return + 1).cumprod()
 
@@ -127,19 +143,29 @@ class Factor:
 
         return weighted_nv
 
-    def get_quantile_returns(self, num_of_sets, rebalance_period=1, top_bottom=False, plot_graph=False):
+    def get_quantile_returns(self, num_of_sets, use_leverage=False, rebalance_period=1, top_bottom=False,
+                             plot_graph=False):
         """
         Return rate by set, column is set number, row is period
         :param num_of_sets: number of sets
+        :param use_leverage: include leverage ratio or not
         :param rebalance_period: period to retain arrangement of sets
         :param top_bottom: if turned on, plot return of long first set, short last set
         :param plot_graph:
         :return:
         """
+        # sanity check
+        if use_leverage and self.leverage_ratio_df is None:
+            print('Please initialize Factor object with margin_rate_df provided')
+            return
+
         if top_bottom:
             plot_graph = True
 
         ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
+
+        # if use_leverage is True, use leveraged return DataFrame
+        return_df = self.leveraged_ret_df if use_leverage else self.ret_df
 
         rebalanced_label = None
         for i in range(1, len(self.factor_df)):
@@ -152,14 +178,14 @@ class Factor:
             # use prev period's label
             if not need_rebalance_label and rebalanced_label is not None:
                 # get realized returns at t
-                current_ret = self.ret_df[i:i + 1].dropna(axis=1)
+                current_ret = return_df[i:i + 1].dropna(axis=1)
                 # eliminate the impact of external data, such as recent listed stocks
                 labeled_data = pd.concat([current_ret.T, label], axis=1).dropna()
 
                 # calculate returns for each set and update
                 current_sets_ret = labeled_data.groupby(by='label').mean().T[:1]
                 ret_of_sets.ix[current_sets_ret.index] = current_sets_ret
-            elif previous_factor.dropna(axis=1).shape[1] > num_of_sets: # compute new label
+            elif previous_factor.dropna(axis=1).shape[1] > num_of_sets:  # compute new label
                 # corresponding ranks at t-1, ascending
                 previous_rank = previous_factor.rank(axis=1)
                 # transform (1, n) DataFrame to a (n, ) series,
@@ -173,7 +199,7 @@ class Factor:
                 # keep this arrangement
                 rebalanced_label = label
                 # get realized returns at t
-                current_ret = self.ret_df[i:i + 1].dropna(axis=1)
+                current_ret = return_df[i:i + 1].dropna(axis=1)
                 # eliminate the impact of external data, such as recent listed stocks
                 labeled_data = pd.concat([current_ret.T, label], axis=1).dropna()
 
@@ -185,7 +211,7 @@ class Factor:
         if plot_graph:
             if top_bottom:
                 return_of_bottom = ret_of_sets.iloc[:, 0]
-                return_of_top = ret_of_sets.iloc[:, num_of_sets-1]
+                return_of_top = ret_of_sets.iloc[:, num_of_sets - 1]
                 spread = return_of_top - return_of_bottom
                 nv_of_top_minus_bottom = (spread + 1).cumprod()
                 plot_series(nv_of_top_minus_bottom, 'Long top short bottom nv')
@@ -251,3 +277,4 @@ class Factor:
 #     denominator = abs(ret_of_sets_by_return[self.num_of_sets] - ret_of_sets_by_return[1])
 
 #     return numerator / denominator
+
