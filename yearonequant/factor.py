@@ -8,7 +8,7 @@ class Factor:
     :param price_df: a DataFrame of cross sectional stock price
     """
 
-    def __init__(self, factor_df, price_df, days_required=60):
+    def __init__(self, factor_df, price_df, days_required=30):
 
         self.factor_df = factor_df
         self.price_df = price_df
@@ -138,7 +138,7 @@ class Factor:
         """
         if top_bottom:
             plot_graph = True
-            
+
         ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
 
         rebalanced_label = None
