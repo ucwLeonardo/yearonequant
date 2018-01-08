@@ -159,9 +159,6 @@ class Factor:
             print('Please initialize Factor object with margin_rate_df provided')
             return
 
-        if top_bottom:
-            plot_graph = True
-
         ret_of_sets = pd.DataFrame(np.nan, index=self.factor_df.index, columns=range(1, num_of_sets + 1))
 
         # if use_leverage is True, use leveraged return DataFrame
@@ -207,18 +204,19 @@ class Factor:
                 current_sets_ret = labeled_data.groupby(by='label').mean().T[:1]
                 ret_of_sets.ix[current_sets_ret.index] = current_sets_ret
 
-        # plot
-        if plot_graph:
-            if top_bottom:
-                return_of_bottom = ret_of_sets.iloc[:, 0]
-                return_of_top = ret_of_sets.iloc[:, num_of_sets - 1]
-                spread = return_of_top - return_of_bottom
-                nv_of_top_minus_bottom = (spread + 1).cumprod()
+        if top_bottom:
+            return_of_bottom = ret_of_sets.iloc[:, 0]
+            return_of_top = ret_of_sets.iloc[:, num_of_sets - 1]
+            spread = return_of_top - return_of_bottom
+            nv_of_top_minus_bottom = (spread + 1).cumprod()
+            if plot_graph:
                 plot_series(nv_of_top_minus_bottom, 'Long top short bottom nv')
+            return nv_of_top_minus_bottom
 
-            else:
-                nv_of_sets = (ret_of_sets + 1).cumprod()
-                plot_df(nv_of_sets, "Net Value of Sets")
+        # plot
+        if plot_graph and not top_bottom:
+            nv_of_sets = (ret_of_sets + 1).cumprod()
+            plot_df(nv_of_sets, "Net Value of Sets")
 
         self.ret_of_sets = ret_of_sets
 
