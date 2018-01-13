@@ -22,6 +22,36 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 # initialize plotly to enable offline mode
 init_notebook_mode(connected=True)
 
+transaction_cost = {'C99': 0.00067,
+                           'CS99': 0.0057,
+                           'A99': 0.00036,
+                           'M99': 0.00047,
+                           'Y99': 0.00041,
+                           'P99': 0.00044,
+                           'JD99': 0.00048,
+                           'PP99': 0.00018,
+                           'I99': 0.0019,
+                           'J99': 0.00036,
+                           'JM99': 0.00089,
+                           'CF99': 0.00041,
+                           'SR99': 0.00041,
+                           'ZC99': 0.00052,
+                           'CU99': 0.00025,
+                           'AL99': 0.00038,
+                           'ZN99': 0.00022,
+                           'RU99': 0.00041,
+                           'AU99': 0.00023,
+                           'AG99': 0.00033,
+                           'RB99': 0.00032,
+                           'IH99': 0.00009,
+                           'IC99': 0.00011,
+                           'IF99': 0.00007,
+                           'TF99': 0.000057,
+                           'T99': 0.00007,
+                           }
+
+def get_transaction_cost():
+    return transaction_cost
 
 # helper functions
 # keep only year and moth(year-month) as string of datetime object
